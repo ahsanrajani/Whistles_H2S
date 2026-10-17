@@ -90,6 +90,11 @@ class VertexTests(unittest.TestCase):
             with self.assertRaises(base.LlmError):
                 base.call_gemini("p", keys={})
 
+    def test_panel_labels_the_vertex_model(self):
+        from integrations.llm import panel
+        with patch.object(vertex, "generate", return_value="x"),                 patch.dict(os.environ, {"VERTEX_MODEL": "gemini-2.5-flash"}):
+            self.assertEqual(panel.ask("gemini", "p", keys={}), ("vertex", "gemini-2.5-flash", "x"))
+
     def test_reply_drafting_uses_vertex(self):
         with patch.object(vertex, "generate", return_value="draft") as gen:
             self.assertEqual(ai_assist._call_gemini_direct("sys", "prompt", keys={}), "draft")

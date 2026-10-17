@@ -4,7 +4,7 @@ same prompt, so "AI visibility" means something (several assistants, not one).
 Gemini goes direct-then-OpenRouter-fallback (see ``base.py``); every other
 member has no direct key here, so it always goes through OpenRouter.
 """
-from . import base
+from . import base, vertex
 
 PANEL = (
     {"id": "gemini", "direct": True, "or_slug": "google/gemini-3.5-flash"},
@@ -25,7 +25,8 @@ def ask(model_id: str, prompt: str, *, keys: dict):
 
     if spec["direct"]:
         try:
-            return "google", "gemini-3.5-flash", base.call_gemini(prompt, keys=keys)
+            text = base.call_gemini(prompt, keys=keys)
+            return ("vertex", vertex.model(), text) if vertex.enabled() else ("google", "gemini-3.5-flash", text)
         except base.LlmError:
             pass   # fall through to OpenRouter's copy of the same model
 
