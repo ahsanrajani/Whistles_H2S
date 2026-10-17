@@ -175,6 +175,9 @@ def keys(ws=None):
     for var, _ in sources.KEYS:                 # env always wins
         if os.environ.get(var):
             k[var] = os.environ[var]
+    from integrations.llm import vertex
+    if vertex.enabled():                        # Vertex AI counts as "a model is configured"
+        k["GOOGLE_API_KEY"] = vertex.SENTINEL
     return k
 
 

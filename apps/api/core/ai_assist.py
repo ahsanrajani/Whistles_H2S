@@ -130,6 +130,9 @@ def _mock_suggestion(kind, thread, draft, kb, brand: str | None, first_contact: 
 
 
 def _call_gemini_direct(system, prompt, *, keys):     # pragma: no cover - network
+    from integrations.llm import vertex
+    if vertex.enabled():                      # service-account auth, no key
+        return vertex.generate(prompt, system=system, max_tokens=1024, temperature=0.4)
     import json
     import urllib.request
     model = keys.get("GEMINI_MODEL", "gemini-3.5-flash")

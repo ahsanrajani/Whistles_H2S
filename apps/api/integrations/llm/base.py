@@ -15,6 +15,8 @@ import json
 import urllib.error
 import urllib.request
 
+from . import vertex
+
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 _TIMEOUT = 30
@@ -25,6 +27,11 @@ class LlmError(Exception):
 
 
 def call_gemini(prompt: str, *, keys: dict, model: str = "gemini-3.5-flash") -> str:
+    if vertex.enabled():                      # service-account auth, no key
+        try:
+            return vertex.generate(prompt, max_tokens=600, temperature=0.3)
+        except vertex.VertexError as exc:
+            raise LlmError(str(exc)) from exc
     token = (keys or {}).get("GOOGLE_API_KEY")
     if not token:
         raise LlmError("gemini: GOOGLE_API_KEY not configured")
