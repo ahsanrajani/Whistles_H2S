@@ -19,3 +19,4 @@ backups/
 *.zip
 preview/
 .env.*
+Bank_Alfalah_Branch_Lists_*.csv
