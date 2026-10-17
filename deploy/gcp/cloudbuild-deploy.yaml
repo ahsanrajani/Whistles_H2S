@@ -16,6 +16,12 @@ steps:
     entrypoint: gcloud
     args: ["run", "deploy", "guru-api", "--region", "${_REGION}", "--image", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/api:${SHORT_SHA}"]
   # The web build bakes the API address in, so look it up after the API is deployed.
+  - id: api-url
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - gcloud run services describe guru-api --region ${_REGION} --format='value(status.url)' > /workspace/api_url
   - id: build-web
     name: gcr.io/cloud-builders/docker
     entrypoint: bash
@@ -23,8 +29,7 @@ steps:
       - -c
       - |
         set -e
-        API_URL=$$(gcloud run services describe guru-api --region ${_REGION} --format='value(status.url)')
-        docker build -f apps/web/Dockerfile --build-arg GURU_API_ORIGIN=$$API_URL \
+        docker build -f apps/web/Dockerfile --build-arg GURU_API_ORIGIN=$$(cat /workspace/api_url) \
           -t ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/web:${SHORT_SHA} .
   - id: push-web
     name: gcr.io/cloud-builders/docker
