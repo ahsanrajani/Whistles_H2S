@@ -140,3 +140,9 @@ on Overview, and the content calendar. Nothing else (no real bank) should be lis
     gcloud sql instances delete guru-db --quiet
     gcloud artifacts repositories delete guru --location=$REGION --quiet
     for S in guru-database-url guru-secret-key guru-admin-password guru-viewer-password guru-demo-password; do gcloud secrets delete $S --quiet; done
+
+## Auto-deploy
+
+Cloud Build trigger `deploy-on-push-main` (GitHub App, 1st gen) runs `deploy/gcp/cloudbuild-deploy.yaml` on every push to `main`:
+it builds both images, deploys `guru-api`, then builds the web image against the API's URL and deploys `guru-web`.
+It runs as the Compute Engine default service account. Watch runs under Cloud Build → History.
