@@ -1,0 +1,1233 @@
+openapi: 3.1.0
+info:
+  title: Guru Ears API
+  version: 1.0.0
+  description: Session-authenticated JSON contract used by the Next.js migration UI.
+servers:
+  - url: /api/v1
+paths:
+  /csrf:
+    get:
+      operationId: getCsrf
+      responses:
+        "200": {description: CSRF token, content: {application/json: {schema: {$ref: "#/components/schemas/Csrf"}}}}
+  /auth/login:
+    post:
+      operationId: login
+      parameters: [{$ref: "#/components/parameters/CsrfHeader"}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: "#/components/schemas/Login"}}}
+      responses:
+        "200": {description: Authenticated user, content: {application/json: {schema: {$ref: "#/components/schemas/Auth"}}}}
+        "401": {$ref: "#/components/responses/Error"}
+  /auth/logout:
+    post:
+      operationId: logout
+      parameters: [{$ref: "#/components/parameters/CsrfHeader"}]
+      responses:
+        "200": {description: Logged out}
+  /auth/me:
+    get:
+      operationId: getMe
+      responses:
+        "200": {description: Current user, content: {application/json: {schema: {$ref: "#/components/schemas/Auth"}}}}
+        "401": {$ref: "#/components/responses/Error"}
+  /auth/oauth/google/start:
+    get:
+      operationId: googleSignInStart
+      description: >
+        Browser-navigation endpoint (not fetched by the typed client). Redirects
+        to Google's consent screen, or straight to the callback in mock mode.
+      responses:
+        "302": {description: Redirect to the identity provider}
+  /auth/oauth/google/callback:
+    get:
+      operationId: googleSignInCallback
+      description: >
+        Google redirects the browser here. On success the session is
+        established and the browser is bounced to APP_BASE_URL/?auth=ok; on
+        failure to APP_BASE_URL/?auth_error=<message>.
+      responses:
+        "302": {description: Redirect back to the app}
+  /workspaces:
+    get:
+      operationId: getWorkspaces
+      responses:
+        "200": {description: Workspace state, content: {application/json: {schema: {$ref: "#/components/schemas/Workspaces"}}}}
+  /projects:
+    get:
+      operationId: getProjects
+      description: Projects for the active workspace (frontend F0.1). Always at least the default 'listening' project.
+      responses:
+        "200": {description: Project list, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /workspace/switch:
+    post:
+      operationId: switchWorkspace
+      parameters: [{$ref: "#/components/parameters/CsrfHeader"}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [ws_id], properties: {ws_id: {type: integer}}}}}
+      responses:
+        "200": {description: Switched}
+        "403": {$ref: "#/components/responses/Error"}
+  /stats:
+    get:
+      operationId: getStats
+      responses:
+        "200": {description: Header totals, content: {application/json: {schema: {$ref: "#/components/schemas/Stats"}}}}
+  /overview:
+    get:
+      operationId: getOverview
+      parameters:
+        - {in: query, name: period, schema: {type: string, enum: [7d, 30d, 90d, 12mo, all]}}
+        - {in: query, name: channel, schema: {type: string}}
+      responses:
+        "200": {description: Overview analytics, content: {application/json: {schema: {$ref: "#/components/schemas/Overview"}}}}
+  /sentiment:
+    get:
+      operationId: getSentiment
+      parameters:
+        - {$ref: "#/components/parameters/Period"}
+      responses:
+        "200": {description: Sentiment analytics, content: {application/json: {schema: {$ref: "#/components/schemas/Sentiment"}}}}
+  /competitors:
+    get:
+      operationId: getCompetitors
+      parameters:
+        - {$ref: "#/components/parameters/Period"}
+      responses:
+        "200": {description: Competitive analytics, content: {application/json: {schema: {$ref: "#/components/schemas/Competitors"}}}}
+  /reviews:
+    get:
+      operationId: getReviews
+      parameters:
+        - {$ref: "#/components/parameters/Period"}
+      responses:
+        "200": {description: App review analytics, content: {application/json: {schema: {$ref: "#/components/schemas/Reviews"}}}}
+  /reviews/store-stats/run:
+    post:
+      operationId: runReviewStoreStats
+      description: Pull real average rating + total rating count for both app stores, plus each store's real 1-5 star breakdown, right now (Apple's iTunes lookup and listing-page scrape are free; the DataForSEO app_info call has a small real cost). Never scheduled.
+      responses: {"200": {description: Ran, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /themes:
+    get:
+      operationId: getThemes
+      responses:
+        "200": {description: Focus-brand themes, content: {application/json: {schema: {$ref: "#/components/schemas/Themes"}}}}
+  /scam:
+    get:
+      operationId: getScamSignals
+      description: Deterministic scam / brand-abuse signal scoring over owned-channel comments. Returns the full scoring policy alongside the flags so every result is auditable.
+      parameters:
+        - {$ref: "#/components/parameters/Period"}
+        - {in: query, name: channel, schema: {type: string}}
+      responses:
+        "200": {description: Comment scam signals, content: {application/json: {schema: {$ref: "#/components/schemas/Scam"}}}}
+  /triage:
+    get:
+      operationId: getComplaintTriage
+      description: Deterministic escalation-risk scoring over complaint-shaped mentions. Returns the full weight/band policy alongside the ranked queue.
+      parameters:
+        - {$ref: "#/components/parameters/Period"}
+      responses:
+        "200": {description: Complaint severity triage, content: {application/json: {schema: {$ref: "#/components/schemas/Triage"}}}}
+  /switch-intent:
+    get:
+      operationId: getSwitchIntent
+      description: Deterministic churn / switch-intent scoring over focus-brand mentions. Returns the full weight/band policy alongside the ranked queue.
+      parameters:
+        - {$ref: "#/components/parameters/Period"}
+      responses:
+        "200": {description: Switch-intent signals, content: {application/json: {schema: {$ref: "#/components/schemas/SwitchIntent"}}}}
+  /incidents:
+    get:
+      operationId: getCompetitorIncidents
+      description: Per-brand mention-velocity z-score against a trailing 28-day baseline, gated on incident-shaped keywords. Window sizes and thresholds are returned in the payload.
+      responses:
+        "200": {description: Competitor incident detection, content: {application/json: {schema: {$ref: "#/components/schemas/Incidents"}}}}
+  /product-lines:
+    get:
+      operationId: getProductLines
+      description: Deterministic keyword tagging of focus-brand mentions into product lines, with share of voice and sentiment per line. The keyword lists are returned in the payload.
+      parameters:
+        - {$ref: "#/components/parameters/Period"}
+      responses:
+        "200": {description: Product-line share of voice, content: {application/json: {schema: {$ref: "#/components/schemas/ProductLines"}}}}
+  /regulatory:
+    get:
+      operationId: getRegulatoryWatch
+      description: Dated feed of collected SBP / Banking Mohtasib / PSX notices, each tagged with a topic and any workspace brand it names. The topic lexicon is returned in the payload.
+      responses:
+        "200": {description: Regulatory watch feed, content: {application/json: {schema: {$ref: "#/components/schemas/Regulatory"}}}}
+  /report:
+    get:
+      operationId: getHighlightsReport
+      description: Executive highlights as a designed one-page PDF (logo, priorities, headline numbers, likely-to-switch verbatims, branches needing attention). 501 if PDF rendering is unavailable.
+      responses:
+        "200": {description: PDF, content: {application/pdf: {schema: {type: string, format: binary}}}}
+        "501": {$ref: "#/components/responses/Error"}
+  /reports/metrics/catalog:
+    get:
+      operationId: getMetricsCatalog
+      description: What is queryable in the metric warehouse for this workspace — (source, metric, entity_type) tuples, whether each is a proportion, the dims present, and the groupable keys.
+      responses:
+        "200": {description: Metric catalog, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /reports/social:
+    get:
+      operationId: getSocialReport
+      description: Owned-social report for one source — account summary with period deltas, post / video / Reel scorecards, and engagement rate by media type. Proportions are Wilson-scored.
+      parameters:
+        - {name: source, in: query, required: true, schema: {type: string}}
+        - {name: start, in: query, schema: {type: string, format: date}}
+        - {name: end, in: query, schema: {type: string, format: date}}
+        - {name: limit, in: query, schema: {type: integer}}
+      responses:
+        "200": {description: Social report, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "400": {$ref: "#/components/responses/Error"}
+        "403": {$ref: "#/components/responses/Error"}
+  /reports/export:
+    get:
+      operationId: exportReport
+      description: Render a P4 report (metrics · sla · csat · complaints · care_agents · social) to CSV / Excel / PDF with charts.
+      parameters:
+        - {name: kind, in: query, required: true, schema: {type: string, enum: [metrics, sla, csat, complaints, care_agents, social, mis_daily, mis_closed]}}
+        - {name: format, in: query, schema: {type: string, enum: [csv, xlsx, pdf]}}
+        - {name: source, in: query, schema: {type: string}}
+        - {name: metric, in: query, schema: {type: string}}
+        - {name: start, in: query, schema: {type: string, format: date}}
+        - {name: end, in: query, schema: {type: string, format: date}}
+      responses:
+        "200":
+          description: Rendered report
+          content:
+            text/csv: {schema: {type: string, format: binary}}
+            application/pdf: {schema: {type: string, format: binary}}
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: {schema: {type: string, format: binary}}
+        "400": {$ref: "#/components/responses/Error"}
+        "403": {$ref: "#/components/responses/Error"}
+  /reports/csat:
+    get:
+      operationId: getCsatReport
+      description: CSAT %, response rate and NPS (Wilson-scored proportions), score distribution and per-channel breakdown, over a date window.
+      parameters:
+        - {name: start, in: query, schema: {type: string, format: date}}
+        - {name: end, in: query, schema: {type: string, format: date}}
+      responses:
+        "200": {description: CSAT report, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "400": {$ref: "#/components/responses/Error"}
+        "403": {$ref: "#/components/responses/Error"}
+  /reports/complaints:
+    get:
+      operationId: getComplaintReport
+      description: Complaint volume, resolution time, Wilson-scored reopen rate, breakdown by closure category and channel, and CSAT for those cases.
+      parameters:
+        - {name: start, in: query, schema: {type: string, format: date}}
+        - {name: end, in: query, schema: {type: string, format: date}}
+      responses:
+        "200": {description: Complaint analytics, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "400": {$ref: "#/components/responses/Error"}
+        "403": {$ref: "#/components/responses/Error"}
+  /reports/mis/daily:
+    get:
+      operationId: getMisDaily
+      description: "MIS: opened / closed / reopened case counts per day, with totals."
+      parameters:
+        - {name: start, in: query, schema: {type: string, format: date}}
+        - {name: end, in: query, schema: {type: string, format: date}}
+      responses:
+        "200": {description: Daily case counts, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "400": {$ref: "#/components/responses/Error"}
+        "403": {$ref: "#/components/responses/Error"}
+  /reports/mis/closed-cases:
+    get:
+      operationId: getMisClosedCases
+      description: "MIS: the flat 13-column closed-case report for the window."
+      parameters:
+        - {name: start, in: query, schema: {type: string, format: date}}
+        - {name: end, in: query, schema: {type: string, format: date}}
+      responses:
+        "200": {description: Closed-case rows, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "400": {$ref: "#/components/responses/Error"}
+        "403": {$ref: "#/components/responses/Error"}
+  /reports/schedules:
+    get:
+      operationId: listReportSchedules
+      responses: {"200": {description: Report schedules, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+    post:
+      operationId: createReportSchedule
+      description: Bind a report (kind + format + params) to a cron and recipients; registers a scheduled_task that emails it.
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Created, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /reports/schedules/{schedule_id}:
+    put:
+      operationId: updateReportSchedule
+      parameters: [{name: schedule_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+    delete:
+      operationId: deleteReportSchedule
+      parameters: [{name: schedule_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /reports/schedules/{schedule_id}/run:
+    post:
+      operationId: runReportSchedule
+      description: Render and email this schedule now.
+      parameters: [{name: schedule_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: Delivery result, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /reports/sla:
+    get:
+      operationId: getSlaReport
+      description: First-response and resolution SLA compliance (Wilson-scored proportions), first-response and assignment-wait time distributions, and missed-SLA count reconciled against case_event, over a date window.
+      parameters:
+        - {name: start, in: query, schema: {type: string, format: date}}
+        - {name: end, in: query, schema: {type: string, format: date}}
+      responses:
+        "200": {description: SLA report, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "400": {$ref: "#/components/responses/Error"}
+        "403": {$ref: "#/components/responses/Error"}
+  /reports/care/agents:
+    get:
+      operationId: getCareAgentReport
+      description: Per-agent session / ready / not-ready / idle seconds from agent_activity, joined with handling time from case timestamps, over a date window.
+      parameters:
+        - {name: start, in: query, schema: {type: string, format: date}}
+        - {name: end, in: query, schema: {type: string, format: date}}
+      responses:
+        "200": {description: Care agent activity report, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "400": {$ref: "#/components/responses/Error"}
+        "403": {$ref: "#/components/responses/Error"}
+  /reports/metrics:
+    get:
+      operationId: getMetricsReport
+      description: One measure over a date window — headline (Wilson-scored when a proportion), daily series, optional dimension breakdown, and the preceding equal-length window for comparison.
+      parameters:
+        - {name: source, in: query, required: true, schema: {type: string}}
+        - {name: metric, in: query, required: true, schema: {type: string}}
+        - {name: start, in: query, schema: {type: string, format: date}}
+        - {name: end, in: query, schema: {type: string, format: date}}
+        - {name: entity_type, in: query, schema: {type: string}}
+        - {name: group_by, in: query, schema: {type: string, enum: [entity_ref, entity_type, media_type, country]}}
+        - {name: compare, in: query, schema: {type: boolean}}
+      responses:
+        "200": {description: Metric report, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "400": {$ref: "#/components/responses/Error"}
+        "403": {$ref: "#/components/responses/Error"}
+  /branches:
+    get:
+      operationId: getBranchPerformance
+      description: Per-branch rollup of Google Maps reviews and branch-resolved social mentions — mean rating, 30-day rating delta, complaint count, Critical count (via the triage scorer), keyword-tagged operational issues, and a deterministic attention score. Worst-first.
+      parameters:
+        - {$ref: "#/components/parameters/Period"}
+      responses:
+        "200": {description: Branch & ATM performance, content: {application/json: {schema: {$ref: "#/components/schemas/Branches"}}}}
+  /branches/{key}/items:
+    get:
+      operationId: getBranchItems
+      description: Every review / social mention attributed to one branch, newest first, paginated. `issue` narrows to one keyword-tagged issue theme, using the same attribution and lexicon as /branches so the total equals that card's issue count.
+      parameters:
+        - {name: key, in: path, required: true, schema: {type: string}}
+        - {$ref: "#/components/parameters/Period"}
+        - {name: issue, in: query, schema: {type: string}}
+        - {name: offset, in: query, schema: {type: integer, default: 0}}
+        - {name: limit, in: query, schema: {type: integer, default: 25, maximum: 100}}
+      responses:
+        "200": {description: Branch items page, content: {application/json: {schema: {$ref: "#/components/schemas/BranchItems"}}}}
+  /branches/map:
+    get:
+      operationId: getBranchMap
+      description: Bank Alfalah's real branch network (data/branches.csv, ~1,186 branches with real coordinates) merged with the branch_perf rollup by branch code. The full geocoded catalogue, not just the branches with review/social signal.
+      responses:
+        "200": {description: Branch map geodata, content: {application/json: {schema: {$ref: "#/components/schemas/BranchMap"}}}}
+  /impersonation:
+    get:
+      operationId: getImpersonationWatch
+      description: "Admin only. Live best-effort probe: deterministic lookalike-domain permutations of the configured BRAND_DOMAINS, each checked for a DNS record and a Certificate Transparency match. Not a database read; network failures degrade to 'unknown' / 'unavailable'."
+      responses:
+        "200": {description: Lookalike-domain candidates ranked by risk, content: {application/json: {schema: {$ref: "#/components/schemas/Impersonation"}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /alerts:
+    get:
+      operationId: getAlerts
+      description: Deterministic threshold rules evaluated against the analysis surfaces (scam, triage, switch-intent, incidents, regulatory, sentiment). Every rule is returned with its current value, threshold and fired flag.
+      responses:
+        "200": {description: Alert evaluation, content: {application/json: {schema: {$ref: "#/components/schemas/Alerts"}}}}
+  /alerts/dispatch:
+    post:
+      operationId: dispatchAlerts
+      description: Admin only. Evaluate now and push the firing alerts to the configured Slack incoming webhook and/or generic JSON webhook.
+      parameters: [{$ref: "#/components/parameters/CsrfHeader"}]
+      responses:
+        "200": {description: What was sent, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /mentions:
+    get:
+      operationId: getMentions
+      parameters:
+        - {in: query, name: q, schema: {type: string}}
+        - {in: query, name: brand_id, schema: {type: integer}}
+        - {in: query, name: surface, schema: {type: string}}
+        - {in: query, name: outlet, schema: {type: string}}
+        - {in: query, name: sentiment, schema: {type: string}}
+        - {in: query, name: type, schema: {type: string}}
+        - {in: query, name: rating, schema: {type: string}}
+        - {in: query, name: since, schema: {type: string}}
+        - {in: query, name: sort, schema: {type: string}}
+      responses:
+        "200": {description: Filtered story-collapsed mentions, content: {application/json: {schema: {$ref: "#/components/schemas/Mentions"}}}}
+  /mentions/export.csv:
+    get:
+      operationId: exportMentions
+      responses:
+        "200": {description: Filtered CSV, content: {text/csv: {schema: {type: string}}}}
+  /mentions/{id}/{action}:
+    post:
+      operationId: setMentionVisibility
+      parameters:
+        - {$ref: "#/components/parameters/CsrfHeader"}
+        - {in: path, name: id, required: true, schema: {type: integer}}
+        - {in: path, name: action, required: true, schema: {type: string, enum: [hide, show]}}
+      responses:
+        "200": {description: Visibility changed}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/workspaces:
+    get:
+      operationId: getAdminWorkspaces
+      responses:
+        "200": {description: Workspace list with the active id, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+    post:
+      operationId: createAdminWorkspace
+      parameters: [{$ref: "#/components/parameters/CsrfHeader"}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [name], properties: {name: {type: string}, market: {type: string}, volume_scenario: {type: string}, sentiment_langs: {type: string}}}}}
+      responses:
+        "200": {description: Created}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/brands:
+    get:
+      operationId: getAdminBrands
+      responses:
+        "200": {description: Brands and matching rules for the active workspace, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+    post:
+      operationId: saveAdminBrand
+      parameters: [{$ref: "#/components/parameters/CsrfHeader"}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [name], properties: {brand_id: {type: integer}, name: {type: string}, is_focus: {type: boolean}, archive: {type: boolean}, safe_patterns: {}, gated_patterns: {}, context_patterns: {}, exclude_patterns: {}}}}}
+      responses:
+        "200": {description: Saved, returns the refreshed brand list}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/brands/preview:
+    post:
+      operationId: previewAdminBrand
+      description: Runs the candidate rules through the shared entity matcher against the existing corpus. No writes.
+      parameters: [{$ref: "#/components/parameters/CsrfHeader"}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, properties: {name: {type: string}, safe_patterns: {}, gated_patterns: {}, context_patterns: {}, exclude_patterns: {}}}}}
+      responses:
+        "200": {description: "Match count, capped sample rows, and per-pattern regex errors", content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/rematch:
+    post:
+      operationId: rematchCorpus
+      parameters: [{$ref: "#/components/parameters/CsrfHeader"}]
+      responses:
+        "200": {description: Corpus re-matched against saved rules}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/users:
+    get:
+      operationId: getAdminUsers
+      responses:
+        "200": {description: Users and assignable workspaces, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+    post:
+      operationId: createAdminUser
+      parameters: [{$ref: "#/components/parameters/CsrfHeader"}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [username, password, workspace_id], properties: {username: {type: string}, password: {type: string}, workspace_id: {type: integer}}}}}
+      responses:
+        "200": {description: Created}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/keys:
+    get:
+      operationId: getAdminKeys
+      responses:
+        "200": {description: Per-workspace and shared credentials, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+    post:
+      operationId: saveAdminKey
+      parameters: [{$ref: "#/components/parameters/CsrfHeader"}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [env_var], properties: {env_var: {type: string}, value: {type: string}, workspace_id: {type: integer}}}}}
+      responses:
+        "200": {description: Saved (shared keys also mirror to .env)}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/sources:
+    get:
+      operationId: getAdminSources
+      responses:
+        "200": {description: Source registry, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/sources/health:
+    get:
+      operationId: getAdminSourceHealth
+      responses:
+        "200": {description: Per-source collection health for this workspace, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/features:
+    get:
+      operationId: getAdminFeatures
+      description: Every feature flag (surface / module / capability) with its per-workspace on/off state.
+      responses:
+        "200": {description: Feature flags, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/features/{feature_key}:
+    put:
+      operationId: setAdminFeature
+      description: Turn one feature on/off for this workspace.
+      parameters: [{name: feature_key, in: path, required: true, schema: {type: string}}]
+      requestBody: {content: {application/json: {schema: {type: object, properties: {enabled: {type: boolean}}}}}}
+      responses: {"200": {description: Updated, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /vantage/prompts:
+    get:
+      operationId: getVantagePrompts
+      description: This workspace's AI-visibility panel prompts (auto-seeds a starter set on first call).
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+    post:
+      operationId: addVantagePrompt
+      requestBody: {content: {application/json: {schema: {type: object, properties: {prompt_text: {type: string}}}}}}
+      responses: {"200": {description: Added, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /vantage/prompts/{prompt_id}:
+    patch:
+      operationId: setVantagePrompt
+      parameters: [{name: prompt_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, properties: {active: {type: boolean}}}}}}
+      responses: {"200": {description: Updated, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+    delete:
+      operationId: deleteVantagePrompt
+      parameters: [{name: prompt_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: Deleted, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /vantage/panel/run:
+    post:
+      operationId: runVantagePanel
+      description: Enqueue one run asking every active prompt to every AI-visibility panel model. Real LLM calls -- never scheduled. Runs on the background worker; returns {ok, job_id, already} and the client follows GET /jobs/{job_id}. At most one run per workspace is in flight.
+      responses: {"200": {description: Queued, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /vantage/insights:
+    get:
+      operationId: getVantageInsights
+      description: Wilson-scored brand mention rate across every panel response, plus visibility gaps.
+      parameters: [{name: since, in: query, required: false, schema: {type: string}}]
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /vantage/seo:
+    get:
+      operationId: getVantageSeo
+      description: Real, already-collected DataForSEO brand-SERP results reshaped into per-brand domain ownership (who shows up when someone searches each tracked brand's name).
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /vantage/seo/report:
+    get:
+      operationId: getVantageSeoReport
+      description: Latest real keyword-ranking + backlink snapshot on file per brand. Empty until run at least once.
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /vantage/seo/run:
+    post:
+      operationId: runVantageSeo
+      description: Pull real keyword rankings + a backlink summary for every tracked brand with a known domain, right now. Real, costed DataForSEO calls -- never scheduled.
+      responses: {"200": {description: Ran, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /vantage/seo/crawl:
+    get:
+      operationId: getVantageSeoCrawl
+      description: Latest real site-crawl + Core Web Vitals snapshot on file per brand. Empty until run at least once.
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /vantage/seo/crawl/run:
+    post:
+      operationId: runVantageSeoCrawl
+      description: Enqueues a real on-page crawl (up to max_pages) + a real Lighthouse Core Web Vitals run against the homepage, for the focus brand only. Real, costed DataForSEO calls; runs on the background worker (can take several minutes) -- poll GET /jobs/{job_id} for progress. Never scheduled.
+      requestBody: {content: {application/json: {schema: {type: object, properties: {max_pages: {type: integer}}}}}}
+      responses: {"200": {description: Ran, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /vantage/seo/suggestions:
+    get:
+      operationId: getVantageSeoSuggestions
+      description: The latest LLM-generated SEO recommendation set on file, if any -- null until generated at least once.
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /vantage/seo/suggestions/run:
+    post:
+      operationId: runVantageSeoSuggestions
+      description: Ask an LLM (via OpenRouter) to turn the real, already-collected SEO facts on file into prioritized recommendations. One real, costed call -- never scheduled. 400s if there is no SEO data on file yet.
+      responses: {"200": {description: Ran, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /admin/owned-posts/media-backfill/run:
+    post:
+      operationId: runAdminMediaBackfill
+      description: Backfill real media (pictures/video) onto Facebook/Instagram posts collected before media capture shipped -- item is insert-only, so those rows never pick it up from a normal re-collection. Idempotent, real Graph API calls.
+      responses: {"200": {description: Ran, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /admin/owned-posts/comment-backfill/run:
+    post:
+      operationId: runAdminCommentBackfill
+      description: Patch parent_id onto Facebook/Instagram comment/reply rows collected before nested-reply tracking existed -- item is insert-only, so those rows never pick it up from a normal re-collection. Idempotent, real Graph API calls.
+      responses: {"200": {description: Ran, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /admin/dm/sync/run:
+    post:
+      operationId: runAdminDmSync
+      description: Poll Facebook Messenger + Instagram DM conversations and route any new message straight into Care. Real, live Graph API calls. 400s if Meta credentials aren't configured for this workspace.
+      responses: {"200": {description: Ran, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /admin/retention:
+    get:
+      operationId: getAdminRetention
+      responses:
+        "200": {description: Author retention policy per source class, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+    put:
+      operationId: setAdminRetention
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses:
+        "200": {description: Policy updated; a rehash job is queued when tightening to hashed, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "400": {$ref: "#/components/responses/Error"}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/precision:
+    get:
+      operationId: getAdminPrecision
+      responses:
+        "200": {description: Match precision per brand and pattern class with Wilson intervals, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/cost:
+    get:
+      operationId: getAdminCost
+      responses:
+        "200": {description: Measured spend and modelled monthly cost, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/runs:
+    get:
+      operationId: getAdminRuns
+      responses:
+        "200": {description: Recent collection runs, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/sources/{source_id}/retry:
+    post:
+      operationId: retryAdminSource
+      description: Queue a one-off collection run scoped to a single source (F6.1).
+      parameters: [{name: source_id, in: path, required: true, schema: {type: string}}]
+      responses: {"200": {description: Queued, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /admin/sources/{source_id}/reset-circuit:
+    post:
+      operationId: resetAdminSourceCircuit
+      description: Manually close an open/half-open circuit breaker for a source (F6.1).
+      parameters: [{name: source_id, in: path, required: true, schema: {type: string}}]
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /admin/sources/{source_id}/enabled:
+    put:
+      operationId: setAdminSourceEnabled
+      description: Turn a collection source on/off for this workspace (per-workspace opt-out; shared credentials untouched).
+      parameters: [{name: source_id, in: path, required: true, schema: {type: string}}]
+      requestBody: {content: {application/json: {schema: {type: object, properties: {enabled: {type: boolean}}}}}}
+      responses: {"200": {description: Updated, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /admin/routing-policy:
+    get:
+      operationId: getAdminRoutingPolicy
+      description: SLA / capacity policy and the closure categories in use (F6.5).
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+    put:
+      operationId: setAdminRoutingPolicy
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Updated, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /admin/jobs/queue:
+    get:
+      operationId: getAdminJobsQueue
+      description: Job queue depth by state and the dead-letter list (F6.6).
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /admin/jobs/{job_id}/retry:
+    post:
+      operationId: retryAdminJob
+      parameters: [{name: job_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: Requeued, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /admin/jobs/scheduled:
+    get:
+      operationId: getAdminJobsScheduled
+      description: Every scheduled_task with its next run (F6.6).
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /admin/owned-analytics:
+    get:
+      operationId: getAdminOwnedAnalytics
+      responses:
+        "200": {description: Owned-analytics ingestion state per source for this workspace, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/owned-analytics/ingest:
+    post:
+      operationId: ingestAdminOwnedAnalytics
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses:
+        "200": {description: Backfill job queued, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /admin/backfill/web/run:
+    post:
+      operationId: runAdminWebBackfill
+      description: Queue the historical web-backfill collection pass (year-qualified brand SERPs), scoped to this workspace. An explicit one-off, never scheduled.
+      responses:
+        "200": {description: Backfill job queued, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+        "409": {$ref: "#/components/responses/Error"}
+  /care/cases:
+    get:
+      operationId: listCareCases
+      parameters: [{name: tab, in: query, schema: {type: string}}]
+      responses: {"200": {description: Case list for a console tab, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /care/cases/ingest:
+    post:
+      operationId: ingestCareMessage
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Message routed into a case, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}:
+    get:
+      operationId: getCareCase
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: Case detail, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "404": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/reply:
+    post:
+      operationId: replyToCareCase
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Reply sent, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/note:
+    post:
+      operationId: addCareNote
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Note added, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/assign:
+    post:
+      operationId: assignCareCase
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Assigned, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/reassign:
+    post:
+      operationId: reassignCareCase
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Reassigned, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/transition:
+    post:
+      operationId: transitionCareCase
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: State changed, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /care/agents:
+    get:
+      operationId: listCareAgents
+      responses: {"200": {description: Care agents with live load, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /care/heartbeat:
+    post:
+      operationId: careHeartbeat
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/session:
+    post:
+      operationId: careAgentSession
+      description: Record a shift event (login / logout / ready / not_ready / idle / active) into agent_activity for the P4.3 care reports.
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Recorded, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /care/roster:
+    get:
+      operationId: getCareRoster
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/agents/{user_id}/status:
+    post:
+      operationId: setCareAgentStatus
+      parameters: [{name: user_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/assignment-rule:
+    get:
+      operationId: getCareAssignmentRule
+      description: The auto-assignment rule, its choices (with the hover wording) and how many agents / waiting cases it covers. Supervisor / team lead / admin only.
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+    put:
+      operationId: setCareAssignmentRule
+      description: Choose the rule that hands new cases to agents (manual / round_robin / least_busy / longest_idle). Needs care:approve; audited.
+      requestBody: {content: {application/json: {schema: {type: object, properties: {strategy: {type: string, enum: [manual, round_robin, least_busy, longest_idle]}}, required: [strategy]}}}}
+      responses: {"200": {description: Updated, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /care/queues:
+    get:
+      operationId: getCareQueues
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/performance:
+    get:
+      operationId: getCarePerformance
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/pending:
+    get:
+      operationId: getCarePending
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/outbound/{action_id}:
+    put:
+      operationId: editCarePending
+      parameters: [{name: action_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/outbound/{action_id}/approve:
+    post:
+      operationId: approveCarePending
+      parameters: [{name: action_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/outbound/{action_id}/reject:
+    post:
+      operationId: rejectCarePending
+      description: Reject a held reply with a note back to the agent.
+      parameters: [{name: action_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Rejected, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /kb/articles:
+    get:
+      operationId: listKbArticles
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+    post:
+      operationId: createKbArticle
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /kb/articles/{article_id}:
+    get:
+      operationId: getKbArticle
+      parameters: [{name: article_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+    put:
+      operationId: updateKbArticle
+      parameters: [{name: article_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+    delete:
+      operationId: deleteKbArticle
+      parameters: [{name: article_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /kb/articles/{article_id}/attachments:
+    post:
+      operationId: addKbAttachment
+      parameters: [{name: article_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /templates:
+    get:
+      operationId: listTemplates
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+    post:
+      operationId: createTemplate
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /templates/{template_id}:
+    put:
+      operationId: updateTemplate
+      parameters: [{name: template_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+    delete:
+      operationId: deleteTemplate
+      parameters: [{name: template_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /macros:
+    get:
+      operationId: listMacros
+      description: Macro library (canned reply + case actions). Quick macros are the ones pinned to the Send dropdown.
+      parameters:
+        - {name: category, in: query, schema: {type: string}}
+        - {name: quick, in: query, schema: {type: boolean}}
+        - {name: include_inactive, in: query, schema: {type: boolean}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+    post:
+      operationId: createMacro
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Created, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "409": {$ref: "#/components/responses/Error"}}
+  /macros/{macro_id}:
+    put:
+      operationId: updateMacro
+      parameters: [{name: macro_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}, "409": {$ref: "#/components/responses/Error"}}
+    delete:
+      operationId: deleteMacro
+      parameters: [{name: macro_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/macros/{macro_id}/preview:
+    post:
+      operationId: previewCaseMacro
+      description: Render the macro's text for this case and describe its actions. Read-only.
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}, {name: macro_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: Preview, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/macros/{macro_id}/apply:
+    post:
+      operationId: applyCaseMacro
+      description: Run the macro's case actions (optionally only the given indexes). The reply text is sent through the normal reply route.
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}, {name: macro_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Per-action results, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /macro-rules:
+    get:
+      operationId: listMacroRules
+      description: Auto macros - rules that run a macro when any of their triggers fires.
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+    post:
+      operationId: createMacroRule
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Created, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /macro-rules/{rule_id}:
+    put:
+      operationId: updateMacroRule
+      parameters: [{name: rule_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+    delete:
+      operationId: deleteMacroRule
+      parameters: [{name: rule_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /content:
+    get:
+      operationId: listContent
+      description: Content calendar — items whose scheduled_for falls in the window, plus in-flight unscheduled items.
+      parameters:
+        - {name: start, in: query, schema: {type: string, format: date}}
+        - {name: end, in: query, schema: {type: string, format: date}}
+        - {name: state, in: query, schema: {type: string}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+    post:
+      operationId: createContent
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Created, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /content/{content_id}:
+    get:
+      operationId: getContent
+      parameters: [{name: content_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: Item + approval history, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+    patch:
+      operationId: updateContent
+      description: Edit fields; a scheduled_for change is the calendar drag-drop.
+      parameters: [{name: content_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+    delete:
+      operationId: deleteContent
+      parameters: [{name: content_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /content/{content_id}/transition:
+    post:
+      operationId: transitionContent
+      description: Non-approval transitions — submit / retract / revise / resubmit / schedule / unapprove / unschedule / publish.
+      parameters: [{name: content_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /content/{content_id}/review:
+    post:
+      operationId: reviewContent
+      description: The approve / reject decision (templates:approve).
+      parameters: [{name: content_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /content/media:
+    post:
+      operationId: uploadContentMedia
+      description: One real picture/video upload for a content calendar item. Returns {url, filename, content_type, size} -- add the url to the item's media list.
+      requestBody: {content: {multipart/form-data: {schema: {type: object, properties: {file: {type: string, format: binary}}}}}}
+      responses: {"200": {description: Uploaded, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /content/assist:
+    post:
+      operationId: suggestContent
+      description: AI caption + hashtag suggestions for a draft post (real, costed OpenRouter call) -- never auto-applied.
+      requestBody: {content: {application/json: {schema: {type: object, properties: {topic: {type: string}, draft: {type: string}, channel: {type: string}}}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /content/ai/compliance:
+    post:
+      operationId: checkContentCompliance
+      description: Deterministic pre-approval check of draft text -- named rules with weights and bands, nearby regulator notices, and (when rewrite is true) a Gemini rewrite that is advice only and never changes the score.
+      requestBody: {content: {application/json: {schema: {type: object, properties: {text: {type: string}, rewrite: {type: boolean}}}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /content/ai/risk:
+    get:
+      operationId: getContentRisk
+      description: "{content id: compliance severity} for the unpublished drafts in the calendar window, so the grid can badge a risky one."
+      parameters:
+        - {name: start, in: query, schema: {type: string, format: date}}
+        - {name: end, in: query, schema: {type: string, format: date}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /content/ai/signals:
+    get:
+      operationId: getContentSignals
+      description: Posts the brand should consider publishing now, drawn from live scam, incident and regulatory signals, each with its evidence and Wilson interval.
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /content/ai/signals/draft:
+    post:
+      operationId: draftContentFromSignal
+      description: Create a calendar draft from one active signal (template text, or a polished caption when an LLM key is set). Records the originating signal for the closed loop.
+      requestBody: {content: {application/json: {schema: {type: object, properties: {key: {type: string}, channel: {type: string}}}}}}
+      responses: {"200": {description: Created, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /content/ai/insights:
+    get:
+      operationId: getContentInsights
+      description: Post performance against the brand's own baseline, scam activity under each post, topic reaction and best posting times. Anything resting on too little history says so.
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /content/ai/impact:
+    get:
+      operationId: getContentImpact
+      description: Closed loop -- scam-flag or complaint rate in comments before versus after each published post, judged only when the Wilson intervals separate.
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/survey:
+    post:
+      operationId: issueCareSurvey
+      description: Issue a post-resolution CSAT survey for a case; returns the response token.
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Issued, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/surveys/respond:
+    post:
+      operationId: respondCareSurvey
+      description: Record a survey score against its token (agent-assisted capture).
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: Recorded, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/suggest:
+    post:
+      operationId: suggestCareReply
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: AI suggestion (text only, never sent), content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/schedule:
+    post:
+      operationId: scheduleCareMessage
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/scheduled:
+    get:
+      operationId: listCareScheduled
+      description: Pending scheduled outbound messages for a case.
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/scheduled/{action_id}/cancel:
+    post:
+      operationId: cancelCareScheduled
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}, {name: action_id, in: path, required: true, schema: {type: integer}}]
+      responses: {"200": {description: Cancelled, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/block:
+    post:
+      operationId: blockCareCustomer
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/unblock:
+    post:
+      operationId: unblockCareCustomer
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}]
+      requestBody: {content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+      responses: {"200": {description: OK, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "400": {$ref: "#/components/responses/Error"}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/cases/{case_id}/export:
+    get:
+      operationId: exportCareCase
+      parameters: [{name: case_id, in: path, required: true, schema: {type: integer}}, {name: format, in: query, schema: {type: string, enum: [pdf, xlsx]}}]
+      responses: {"200": {description: Case document, content: {application/pdf: {schema: {type: string, format: binary}}, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {schema: {type: string, format: binary}}}}, "403": {$ref: "#/components/responses/Error"}, "404": {$ref: "#/components/responses/Error"}}
+  /care/search:
+    get:
+      operationId: careSearch
+      parameters: [{name: q, in: query, schema: {type: string}}, {name: limit, in: query, schema: {type: integer}}]
+      responses: {"200": {description: Cross-entity autocomplete results, content: {application/json: {schema: {type: object, additionalProperties: true}}}}, "403": {$ref: "#/components/responses/Error"}}
+  /jobs/refresh:
+    post:
+      operationId: startRefreshJob
+      parameters: [{$ref: "#/components/parameters/CsrfHeader"}]
+      responses:
+        "200": {description: "Job started or already running", content: {application/json: {schema: {type: object, properties: {job_id: {type: string}, already: {type: boolean}}}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /jobs/score:
+    post:
+      operationId: startScoreJob
+      parameters: [{$ref: "#/components/parameters/CsrfHeader"}]
+      responses:
+        "200": {description: "Job started or already running", content: {application/json: {schema: {type: object, properties: {job_id: {type: string}, already: {type: boolean}}}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /jobs/{id}:
+    get:
+      operationId: pollJob
+      parameters:
+        - {in: path, name: id, required: true, schema: {type: string}}
+      responses:
+        "200": {description: "Job state and log lines", content: {application/json: {schema: {type: object, properties: {state: {type: string}, lines: {type: array, items: {type: string}}}}}}}
+        "404": {$ref: "#/components/responses/Error"}
+  /jobs/{id}/stream:
+    get:
+      operationId: streamJob
+      description: Server-sent events; one `data:` frame per poll until the worker settles.
+      parameters:
+        - {in: path, name: id, required: true, schema: {type: string}}
+      responses:
+        "200": {description: SSE stream, content: {text/event-stream: {schema: {type: string}}}}
+  /review:
+    get:
+      operationId: getReviewQueue
+      responses:
+        "200": {description: Per-rule calibration status and the unlabelled batch, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /review/branch-complaints/upload:
+    post:
+      operationId: uploadBranchComplaints
+      description: Bulk-import branch complaints from a CSV (headers Branch Name, Complainant, Complaint Date, "Complaint Text (paraphrased)", Source URL). Inserted rows are scored asynchronously -- a scoring job is enqueued when any row is inserted.
+      requestBody: {content: {multipart/form-data: {schema: {type: object, properties: {file: {type: string, format: binary}}}}}}
+      responses:
+        "200": {description: "Import result", content: {application/json: {schema: {type: object, properties: {inserted: {type: integer}, skipped: {type: integer}, errors: {type: array, items: {type: object, properties: {row: {type: integer}, reason: {type: string}}}}, job_id: {type: string, nullable: true}}}}}}
+        "400": {$ref: "#/components/responses/Error"}
+        "403": {$ref: "#/components/responses/Error"}
+  /review/{id}/{verdict}:
+    post:
+      operationId: labelReviewMention
+      parameters:
+        - {$ref: "#/components/parameters/CsrfHeader"}
+        - {in: path, name: id, required: true, schema: {type: integer}}
+        - {in: path, name: verdict, required: true, schema: {type: string, enum: [yes, "no"]}}
+      responses:
+        "200": {description: gold_label written}
+        "403": {$ref: "#/components/responses/Error"}
+  /onboarding/state:
+    get:
+      operationId: getOnboardingState
+      responses:
+        "200": {description: Full wizard state for the active session workspace, content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /onboarding/preview:
+    get:
+      operationId: previewOnboardingBrand
+      parameters:
+        - {in: query, name: name, schema: {type: string}}
+      responses:
+        "200": {description: "Sample corpus matches for the auto-generated rules", content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "403": {$ref: "#/components/responses/Error"}
+  /onboarding/{step}:
+    patch:
+      operationId: applyOnboardingStep
+      parameters:
+        - {$ref: "#/components/parameters/CsrfHeader"}
+        - {in: path, name: step, required: true, schema: {type: integer, minimum: 1, maximum: 5}}
+      requestBody:
+        content: {application/json: {schema: {type: object, additionalProperties: true}}}
+      responses:
+        "200": {description: "Step applied; returns the next step (0 when finished)", content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+        "400": {$ref: "#/components/responses/Error"}
+        "403": {$ref: "#/components/responses/Error"}
+        "409": {$ref: "#/components/responses/Error"}
+components:
+  parameters:
+    CsrfHeader: {in: header, name: X-CSRF-Token, required: true, schema: {type: string}}
+    Period: {in: query, name: period, schema: {type: string, enum: [7d, 30d, 90d, 12mo, all], default: 90d}}
+  responses:
+    Error: {description: Error, content: {application/json: {schema: {$ref: "#/components/schemas/Error"}}}}
+  schemas:
+    Error: {type: object, required: [error], properties: {error: {type: string}}}
+    Csrf: {type: object, required: [token], properties: {token: {type: string}}}
+    Login:
+      type: object
+      required: [username, password]
+      properties: {username: {type: string}, password: {type: string}}
+    Workspace:
+      type: object
+      required: [id, name, market, onboarding_step, slug]
+      properties:
+        id: {type: integer}
+        name: {type: string}
+        market: {type: string}
+        onboarding_step: {type: integer}
+        slug: {type: string}
+    User:
+      type: object
+      required: [id, name, role, roles, perms]
+      properties:
+        id: {type: integer}
+        name: {type: string}
+        role: {type: string, enum: [admin, bank_viewer]}
+        roles: {type: array, items: {type: string}}
+        perms: {type: array, items: {type: string}, description: "effective (area:verb) grants"}
+        workspace: {$ref: "#/components/schemas/Workspace"}
+    Auth: {type: object, required: [user], properties: {user: {$ref: "#/components/schemas/User"}}}
+    Workspaces:
+      type: object
+      required: [can_switch, list]
+      properties:
+        active: {$ref: "#/components/schemas/Workspace"}
+        can_switch: {type: boolean}
+        list: {type: array, items: {$ref: "#/components/schemas/Workspace"}}
+    Stats:
+      type: object
+      required: [items, mentions]
+      properties: {items: {type: integer}, mentions: {type: integer}, last_run: {type: [string, "null"]}}
+    Overview: {type: object, additionalProperties: true}
+    Sentiment: {type: object, additionalProperties: true}
+    Competitors: {type: object, additionalProperties: true}
+    Reviews:
+      type: object
+      additionalProperties: true
+      required: [focus_brand_id, store_stats]
+      properties:
+        focus_brand_id: {type: [integer, "null"]}
+        store_stats:
+          anyOf:
+            - {$ref: "#/components/schemas/ReviewStoreStats"}
+            - {type: "null"}
+    ReviewStoreStats:
+      type: object
+      description: Real, live figures last fetched by POST /reviews/store-stats/run (Apple's iTunes lookup, free; DataForSEO app_info + a listing-page scrape for each store's histogram, small paid cost for Play Store). Null until the first refresh, and any field a fetch could not get is null rather than fabricated.
+      required: [app_store, play_store, combined]
+      properties:
+        apps:
+          description: Every configured app with its own figures (APPSTORE_APP_ID / PLAYSTORE_APP_ID may list several). app_store / play_store are each store's roll-up across its apps.
+          type: array
+          items:
+            allOf:
+              - {$ref: "#/components/schemas/ReviewStoreStatsEntry"}
+              - type: object
+                required: [store, app_id]
+                properties:
+                  store: {type: string, enum: [app_store, play_store]}
+                  app_id: {type: string}
+                  name: {type: [string, "null"]}
+                  icon: {type: [string, "null"], description: https URL of the app icon, null when unknown.}
+        app_store:
+          anyOf:
+            - {$ref: "#/components/schemas/ReviewStoreStatsEntry"}
+            - {type: "null"}
+        play_store:
+          anyOf:
+            - {$ref: "#/components/schemas/ReviewStoreStatsEntry"}
+            - {type: "null"}
+        combined:
+          description: Derived, not separately fetched -- the count-weighted average and summed histogram across whichever of app_store/play_store have real figures. Null only if neither store has a rating yet.
+          anyOf:
+            - {$ref: "#/components/schemas/ReviewStoreStatsEntry"}
+            - {type: "null"}
+    ReviewStoreStatsEntry:
+      type: object
+      required: [rating, count, captured_at]
+      properties:
+        rating: {type: [number, "null"], minimum: 1, maximum: 5}
+        count: {type: [integer, "null"]}
+        captured_at: {type: [string, "null"], format: date-time}
+        histogram:
+          description: Real 1-5 star counts. Play Store figures are scraped exact counts; App Store figures are computed from the listing page's rounded percentages (approximate, real-derived, never a guess). Omitted when a store's histogram couldn't be read.
+          type: object
+          properties:
+            "1": {type: integer}
+            "2": {type: integer}
+            "3": {type: integer}
+            "4": {type: integer}
+            "5": {type: integer}
+        good_share: {type: [number, "null"], description: "Wilson-interval point estimate for the >=4-star share of `histogram`. Omitted when there's no histogram to compute it from."}
+        good_lo: {type: [number, "null"], description: "Wilson lower bound for good_share."}
+        good_hi: {type: [number, "null"], description: "Wilson upper bound for good_share."}
+    Themes: {type: object, additionalProperties: true}
+    Scam: {type: object, additionalProperties: true}
+    Triage: {type: object, additionalProperties: true}
+    SwitchIntent: {type: object, additionalProperties: true}
+    Incidents: {type: object, additionalProperties: true}
+    ProductLines: {type: object, additionalProperties: true}
+    Regulatory: {type: object, additionalProperties: true}
+    Impersonation: {type: object, additionalProperties: true}
+    Branches: {type: object, additionalProperties: true}
+    BranchMap: {type: object, additionalProperties: true}
+    BranchItems: {type: object, additionalProperties: true}
+    Alerts: {type: object, additionalProperties: true}
+    Mentions: {type: object, additionalProperties: true}

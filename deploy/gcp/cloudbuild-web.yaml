@@ -1,0 +1,6 @@
+# gcloud builds submit --config deploy/gcp/cloudbuild-web.yaml \
+#   --substitutions=_IMAGE=<region>-docker.pkg.dev/<project>/guru/web:v1,_API_ORIGIN=https://<api-service-url> .
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "apps/web/Dockerfile", "--build-arg", "GURU_API_ORIGIN=${_API_ORIGIN}", "-t", "${_IMAGE}", "."]
+images: ["${_IMAGE}"]

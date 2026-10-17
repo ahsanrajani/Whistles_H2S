@@ -1,0 +1,5 @@
+import {AlertTriangle, Inbox} from "lucide-react";
+import {Card} from "./ui/card";
+export function LoadingState({label = "Loading intelligence…"}: {label?: string}) {return <div className="grid gap-4" aria-live="polite"><div className="h-24 animate-pulse rounded-card bg-muted"/><div className="h-64 animate-pulse rounded-card bg-muted"/><span className="sr-only">{label}</span></div>;}
+export function ErrorState({message}: {message: string}) {return <Card className="grid place-items-center gap-3 py-16 text-center"><AlertTriangle className="text-danger"/><div><h2 className="font-semibold">We could not load this view</h2><p className="text-sm text-muted-foreground">{message}</p></div></Card>;}
+export function EmptyState({title, body}: {title: string; body: string}) {return <Card className="grid place-items-center gap-3 py-16 text-center"><Inbox className="text-primary"/><div><h2 className="font-semibold">{title}</h2><p className="max-w-md text-sm text-muted-foreground">{body}</p></div></Card>;}

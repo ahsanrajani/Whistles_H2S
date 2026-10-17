@@ -1,0 +1,26 @@
+{
+  "name": "guru-ears-portal",
+  "private": true,
+  "workspaces": ["apps/web"],
+  "scripts": {
+    "dev": "concurrently -k -n api,next -c magenta,cyan \"python -m uvicorn asgi:app --app-dir apps/api --port 5000\" \"npm run dev --workspace apps/web\"",
+    "build": "npm run build --workspace apps/web",
+    "lint": "npm run lint --workspace apps/web",
+    "typecheck": "npm run typecheck --workspace apps/web",
+    "gen:types": "openapi-typescript packages/contracts/openapi.yaml -o apps/web/lib/api-types.ts",
+    "db:up": "docker compose -f ops/compose/docker-compose.yml up -d",
+    "db:down": "docker compose -f ops/compose/docker-compose.yml down",
+    "migrate": "cd apps/api && python -m alembic upgrade head",
+    "test:python": "cd apps/api && python -m unittest discover -s tests -t . -q",
+    "test:e2e": "npm run test:e2e --workspace apps/web",
+    "check:unit": "cd apps/api && python -m unittest -q",
+    "check:api": "cd apps/api && python -m unittest discover -s tests -t . -q",
+    "check:web": "npm run typecheck && npm run lint && npm run build",
+    "check:all": "npm run check:api && npm run check:web",
+    "check": "npm run check:all"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "openapi-typescript": "^7.9.0"
+  }
+}

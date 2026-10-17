@@ -1,0 +1,299 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-highlight: var(--highlight);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --radius-card: 1.75rem;
+}
+
+/* ------------------------------------------------------------------ tokens
+   Two accents only:  PRIMARY violet (every interactive thing, focus, charts' first
+   series) and ACCENT coral->rose (hero gradients, highlights, second series).
+   success / warning / danger stay as functional status colours, never decoration.
+   `--highlight` is a soft tint of the primary (not a third hue) so the existing
+   `text-highlight` / `ring-highlight` usages stay inside the primary family. */
+:root {
+  --background: #f1effa;
+  --foreground: #16132b;
+  --card: rgba(255, 255, 255, .70);
+  --muted: #ebe8f7;
+  --muted-foreground: #66628a;
+  --border: rgba(22, 19, 43, .10);
+  --primary: #6d5ef6;
+  --highlight: #7b6dff;
+  --accent: #ff7a5c;
+  --accent-2: #f0508a;
+  --success: #047857;
+  --warning: #b45309;
+  --danger: #e11d48;
+
+  --radius-control: 62.4375rem;
+  --chart-1: #6d5ef6; --chart-2: #ff7a5c; --chart-3: #2d3270; --chart-4: #a99dff; --chart-5: #ffb09c; --chart-6: #8d94ad;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --t-hover: 160ms;
+  --t-pop: 200ms;
+  --t-sheet: 300ms;
+  --t-page: 440ms;
+
+  /* page: soft pastel mesh behind everything, fixed so glass always has something to refract */
+  --mesh:
+    radial-gradient(60rem 42rem at 6% -10%, rgba(124, 108, 255, .42), transparent 64%),
+    radial-gradient(50rem 36rem at 98% 2%, rgba(255, 138, 110, .34), transparent 62%),
+    radial-gradient(54rem 44rem at 60% 110%, rgba(120, 168, 255, .36), transparent 64%),
+    radial-gradient(34rem 26rem at 40% 42%, rgba(240, 80, 138, .10), transparent 70%);
+
+  /* liquid glass: translucent fill + bright specular edge + soft depth */
+  --glass-bg: linear-gradient(140deg, rgba(255, 255, 255, .66), rgba(255, 255, 255, .38));
+  --glass-border: rgba(255, 255, 255, .78);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 -1px 0 rgba(255, 255, 255, .30),
+    0 0.75rem 2.5rem rgba(72, 56, 170, .10), 0 2px 0.5rem rgba(72, 56, 170, .06);
+  --glass-pop: linear-gradient(140deg, rgba(255, 255, 255, .92), rgba(255, 255, 255, .78));
+  --glass-pop-shadow: inset 0 1px 0 #fff, 0 1.5rem 3.75rem rgba(40, 28, 120, .22), 0 0.25rem 0.875rem rgba(40, 28, 120, .10);
+  --overlay: rgba(22, 16, 56, .34);
+
+  --sidebar-bg: radial-gradient(26rem 20rem at 0% 0%, rgba(124, 108, 255, .34), transparent 60%),
+    radial-gradient(22rem 18rem at 100% 100%, rgba(255, 122, 92, .16), transparent 60%),
+    linear-gradient(180deg, #15173a 0%, #0d0f27 100%);
+  --sidebar-line: rgba(255, 255, 255, .09);
+  --shadow-card: 0 0.75rem 2.5rem rgba(72, 56, 170, .10);
+}
+
+.dark {
+  --background: #090a1d;
+  --foreground: #f3f2ff;
+  --card: rgba(255, 255, 255, .06);
+  --muted: rgba(255, 255, 255, .07);
+  --muted-foreground: #a6a3c7;
+  --border: rgba(255, 255, 255, .11);
+  --highlight: #a79dff;
+  --accent: #ff8f73;
+  --accent-2: #ff6aa0;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #fb7185;
+
+  --mesh:
+    radial-gradient(56rem 38rem at 6% -10%, rgba(109, 94, 246, .34), transparent 62%),
+    radial-gradient(46rem 32rem at 98% 2%, rgba(255, 122, 92, .15), transparent 60%),
+    radial-gradient(52rem 40rem at 64% 108%, rgba(70, 110, 230, .20), transparent 62%);
+  --glass-bg: linear-gradient(140deg, rgba(255, 255, 255, .105), rgba(255, 255, 255, .045));
+  --glass-border: rgba(255, 255, 255, .13);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), inset 0 -1px 0 rgba(255, 255, 255, .03),
+    0 1rem 3rem rgba(0, 0, 0, .38), 0 2px 0.5rem rgba(0, 0, 0, .22);
+  --glass-pop: linear-gradient(140deg, rgba(40, 38, 82, .94), rgba(24, 22, 56, .90));
+  --glass-pop-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 1.75rem 4.375rem rgba(0, 0, 0, .6), 0 0.25rem 0.875rem rgba(0, 0, 0, .3);
+  --overlay: rgba(4, 4, 18, .55);
+  --chart-1: #8f84ff; --chart-2: #ff8f73; --chart-3: #c9d0ff; --chart-4: #5a4fc7; --chart-5: #ffc2b3; --chart-6: #8f96b3;
+  --sidebar-bg: radial-gradient(26rem 20rem at 0% 0%, rgba(109, 94, 246, .30), transparent 60%),
+    radial-gradient(22rem 18rem at 100% 100%, rgba(255, 122, 92, .10), transparent 60%),
+    linear-gradient(180deg, #0a0b1f 0%, #05060f 100%);
+  --sidebar-line: rgba(255, 255, 255, .08);
+  --shadow-card: 0 1rem 3rem rgba(0, 0, 0, .38);
+}
+
+* {border-color: var(--border);}
+html {font-size: 80%; background: var(--background); color: var(--foreground); color-scheme: light;}
+html.dark {color-scheme: dark;}
+body {
+  margin: 0; min-height: 100vh; color: var(--foreground);
+  background-color: var(--background); background-image: var(--mesh); background-attachment: fixed;
+}
+::selection {background: color-mix(in oklab, var(--primary) 28%, transparent);}
+
+/* one transition vocabulary for every control: colour, surface, lift */
+button, a, input, select, textarea, summary {
+  transition: color var(--t-hover) var(--ease-out), background-color var(--t-hover) var(--ease-out),
+    border-color var(--t-hover) var(--ease-out), box-shadow var(--t-hover) var(--ease-out),
+    transform var(--t-hover) var(--ease-out), opacity var(--t-hover) var(--ease-out);
+}
+:focus-visible {outline: 2px solid var(--primary); outline-offset: 0.1875rem;}
+.numeric {font-variant-numeric: tabular-nums; font-family: var(--font-numbers), var(--font-body), sans-serif;}
+.font-onest {font-family: var(--font-onest), var(--font-body), sans-serif;}
+
+/* thin, rounded scrollbars so overflow areas do not break the glass */
+* {scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--foreground) 22%, transparent) transparent;}
+
+/* ------------------------------------------------------------------ rounded everywhere
+   Components were written with 5-14px radii. Unlayered rules beat Tailwind's layered
+   utilities, so retuning them here rounds every existing surface consistently. */
+.rounded-\[0\.3125rem\], .rounded-\[0\.375rem\] {border-radius: 0.625rem;}
+.rounded-\[0\.4375rem\], .rounded-\[0\.5rem\] {border-radius: 0.875rem;}
+.rounded-\[0\.5625rem\], .rounded-\[0\.625rem\] {border-radius: 1.125rem;}
+.rounded-\[0\.75rem\] {border-radius: 1.375rem;}
+.rounded-\[0\.875rem\] {border-radius: 1.625rem;}
+textarea {border-radius: 1.25rem;}
+
+/* ------------------------------------------------------------------ liquid glass
+   Cards: translucent fill, specular top edge, blur + saturation so the pastel mesh
+   refracts through. */
+.card-shadow {box-shadow: var(--glass-shadow);}
+.rounded-card {
+  background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(1.375rem) saturate(170%); backdrop-filter: blur(1.375rem) saturate(170%);
+}
+.gp-glass-sm {  /* small glass chips: pills, icon buttons */
+  background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(0.875rem) saturate(160%); backdrop-filter: blur(0.875rem) saturate(160%);
+}
+/* menus, popovers, the command palette: more opaque so text stays legible over any content */
+.gp-menu-in, .gp-pop-in {
+  background: var(--glass-pop); border: 1px solid var(--glass-border); box-shadow: var(--glass-pop-shadow);
+  -webkit-backdrop-filter: blur(1.625rem) saturate(180%); backdrop-filter: blur(1.625rem) saturate(180%);
+}
+
+/* hero surface (primary -> accent): used once per screen for the headline figure */
+.gp-hero {
+  position: relative; overflow: hidden; color: #fff; border: 1px solid rgba(255, 255, 255, .28);
+  background: radial-gradient(22rem 14rem at 100% 0%, rgba(255, 255, 255, .30), transparent 60%),
+    linear-gradient(135deg, var(--primary) 0%, #8a63f2 38%, var(--accent-2) 78%, var(--accent) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), 0 1.125rem 2.75rem rgba(109, 94, 246, .34);
+}
+.gp-hero * {color: inherit;}
+.gp-hero .text-muted-foreground {color: rgba(255, 255, 255, .80);}
+.gp-hero .bg-muted {background: rgba(255, 255, 255, .22); border-color: rgba(255, 255, 255, .30);}
+
+/* ------------------------------------------------------------------ dark sidebar
+   The dual-tone split: a deep floating sidebar against the light (or dark-mesh) main. */
+.gp-sidebar {
+  position: relative; display: flex; height: 100%; flex-direction: column; overflow: hidden;
+  border-radius: 2rem; color: #fff; background: var(--sidebar-bg);
+  border: 1px solid var(--sidebar-line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10), 0 1.5rem 3.75rem rgba(14, 12, 48, .34);
+}
+.gp-sidebar .text-muted-foreground {color: rgba(255, 255, 255, .56);}
+.gp-nav-link {
+  position: relative; z-index: 1; display: flex; align-items: center; gap: .75rem; border-radius: 62.4375rem;
+  padding: .6rem .9rem; font-size: .875rem; font-weight: 500; color: rgba(255, 255, 255, .66);
+}
+.gp-nav-link:hover {color: #fff; background: rgba(255, 255, 255, .07); transform: translateX(2px);}
+.gp-nav-link[aria-current="page"] {color: #fff;}
+.gp-nav-link[aria-current="page"] svg {color: #fff;}
+/* the sliding active pill: one element that glides between links (positioned by app-shell) */
+.gp-nav-pill {
+  position: absolute; left: 0; top: 0; z-index: 0; width: 100%; border-radius: 62.4375rem; pointer-events: none; opacity: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .20), rgba(255, 255, 255, .07));
+  border: 1px solid rgba(255, 255, 255, .16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), 0 0.5rem 1.5rem rgba(109, 94, 246, .32);
+  transition: transform var(--t-sheet) var(--ease-out), height var(--t-sheet) var(--ease-out), opacity var(--t-hover) linear;
+}
+.gp-nav-pill::after {  /* tiny accent dot, like the reference's active marker */
+  content: ""; position: absolute; right: 0.875rem; top: 50%; width: 0.375rem; height: 0.375rem; margin-top: -3px; border-radius: 62.4375rem;
+  background: var(--accent); box-shadow: 0 0 0.625rem var(--accent);
+}
+/* collapsible nav groups animate height instead of popping */
+.gp-collapse {display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--t-sheet) var(--ease-out), opacity var(--t-pop) linear;}
+.gp-collapse[data-open="false"] {grid-template-rows: 0fr; opacity: 0;}
+.gp-collapse > div {min-height: 0; overflow: hidden;}
+
+/* the floating glass top bar */
+.gp-topbar {
+  position: sticky; top: 1rem; z-index: 30; margin: 1rem 1rem 0; border-radius: 1.75rem;
+  background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(1.375rem) saturate(170%); backdrop-filter: blur(1.375rem) saturate(170%);
+}
+
+/* chart tooltip: the same dense glass as menus */
+.gp-tooltip {
+  min-width: 9rem; padding: .5rem .75rem; border-radius: 1rem; font-size: .75rem; line-height: 1.5; color: var(--foreground);
+  background: var(--glass-pop); border: 1px solid var(--glass-border); box-shadow: var(--glass-pop-shadow);
+  -webkit-backdrop-filter: blur(1.25rem) saturate(180%); backdrop-filter: blur(1.25rem) saturate(180%);
+}
+
+/* ------------------------------------------------------------------ tabs: one sliding pill */
+.gp-tabbar {
+  position: relative; display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 0.3125rem; border-radius: 62.4375rem;
+  justify-self: start; width: fit-content; max-width: 100%;
+  background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(1rem) saturate(160%); backdrop-filter: blur(1rem) saturate(160%);
+}
+.gp-tab {position: relative; z-index: 1; border-radius: 62.4375rem; padding: .45rem 1rem; font-size: .875rem; font-weight: 600; color: var(--muted-foreground); transition: color 120ms var(--ease-out);}
+.gp-tab:hover {color: var(--foreground);}
+.gp-tab[aria-selected="true"], .gp-tab[aria-current="page"] {color: #fff; transition: color 200ms var(--ease-out) 110ms;}
+.gp-tab-pill {
+  position: absolute; left: 0; top: 0; z-index: 0; border-radius: 62.4375rem; pointer-events: none; opacity: 0;
+  background: linear-gradient(135deg, #1d1f45, #0f1130); box-shadow: 0 0.375rem 1.125rem rgba(15, 17, 48, .34), inset 0 1px 0 rgba(255, 255, 255, .18);
+  transition: transform var(--t-sheet) var(--ease-out), width var(--t-sheet) var(--ease-out), height var(--t-sheet) var(--ease-out), opacity var(--t-hover) linear;
+}
+.dark .gp-tab-pill {background: linear-gradient(135deg, var(--primary), #5546e0); box-shadow: 0 0.375rem 1.25rem rgba(109, 94, 246, .45), inset 0 1px 0 rgba(255, 255, 255, .25);}
+
+/* ------------------------------------------------------------------ custom select */
+.gp-select-chev {transition: transform var(--t-pop) var(--ease-out);}
+.gp-select[data-open="true"] .gp-select-chev {transform: rotate(180deg);}
+.gp-option {display: flex; align-items: center; justify-content: space-between; gap: .75rem; border-radius: 0.875rem; padding: .5rem .75rem; font-size: .875rem; cursor: pointer;}
+.gp-option:hover, .gp-option[data-active="true"] {background: color-mix(in oklab, var(--primary) 12%, transparent);}
+.gp-option[aria-selected="true"] {color: var(--primary); font-weight: 600;}
+.dark .gp-option[aria-selected="true"] {color: var(--highlight);}
+
+/* ------------------------------------------------------------------ motion
+   One easing (--ease-out), four durations: 160 hover / 200 popover / 300 sheet / 440 page.
+   Entrances use opacity + transform only (cheap on glass); blur-to-focus is reserved for
+   the page title. Everything collapses to ~0ms under prefers-reduced-motion. */
+@keyframes gp-fade-in {from {opacity: 0;} to {opacity: 1;}}
+@keyframes gp-pop-in {from {opacity: 0; transform: translate(-50%, 0.5rem) scale(.96);} to {opacity: 1; transform: translate(-50%, 0) scale(1);}}
+@keyframes gp-sheet-in {from {opacity: 0; transform: translateX(-16px);} to {opacity: 1; transform: translateX(0);}}
+@keyframes gp-sheet-in-right {from {opacity: 0; transform: translateX(1.75rem) scale(.99);} to {opacity: 1; transform: translateX(0) scale(1);}}
+@keyframes gp-menu-in {from {opacity: 0; transform: translateY(0.375rem) scale(.96);} to {opacity: 1; transform: translateY(0) scale(1);}}
+@keyframes gp-card-in {from {opacity: 0; transform: translateY(0.875rem) scale(.985);} to {opacity: 1; transform: translateY(0) scale(1);}}
+@keyframes gp-focus-in {from {opacity: 0; transform: translateY(0.625rem); filter: blur(0.5rem);} to {opacity: 1; transform: translateY(0); filter: blur(0);}}
+.gp-overlay-in {
+  animation: gp-fade-in var(--t-pop) var(--ease-out); background: var(--overlay);
+  -webkit-backdrop-filter: blur(0.625rem) saturate(130%); backdrop-filter: blur(0.625rem) saturate(130%);
+}
+.gp-pop-in {animation: gp-pop-in var(--t-sheet) var(--ease-out);}
+.gp-sheet-in {animation: gp-sheet-in var(--t-sheet) var(--ease-out);}
+.gp-sheet-right-in {
+  animation: gp-sheet-in-right var(--t-sheet) var(--ease-out);
+  margin: 0.75rem; height: calc(100% - 1.5rem); border-radius: 2rem;
+  background: var(--glass-pop); border: 1px solid var(--glass-border); box-shadow: var(--glass-pop-shadow);
+  -webkit-backdrop-filter: blur(1.625rem) saturate(180%); backdrop-filter: blur(1.625rem) saturate(180%);
+}
+.gp-menu-in {animation: gp-menu-in var(--t-pop) var(--ease-out); transform-origin: top left;}
+.gp-rise {animation: gp-fade-in var(--t-pop) var(--ease-out);}
+.gp-focus-in {animation: gp-focus-in var(--t-page) var(--ease-out) backwards;}
+/* every glass card enters with a short stagger by position (capped so long grids never lag) */
+.rounded-card {animation: gp-card-in var(--t-page) var(--ease-out) backwards; animation-delay: calc(var(--gp-i, 0) * 45ms);}
+.rounded-card:nth-child(2) {--gp-i: 1;} .rounded-card:nth-child(3) {--gp-i: 2;} .rounded-card:nth-child(4) {--gp-i: 3;}
+.rounded-card:nth-child(5) {--gp-i: 4;} .rounded-card:nth-child(6) {--gp-i: 5;} .rounded-card:nth-child(7) {--gp-i: 6;}
+.rounded-card:nth-child(n + 8) {--gp-i: 7;}
+main h1 {animation: gp-focus-in var(--t-page) var(--ease-out) backwards;}
+
+@keyframes jubilee-marker-alert {
+  0%, 100% {box-shadow: 0 0 0 1px rgba(225, 29, 72, .32), 0 1px 0.1875rem rgba(0, 0, 0, .24); filter: brightness(1);}
+  50% {box-shadow: 0 0 0 0.25rem rgba(225, 29, 72, .18), 0 2px 0.4375rem rgba(225, 29, 72, .42); filter: brightness(1.08);}
+}
+.jubilee-map-marker-alert {animation: jubilee-marker-alert 1.8s ease-in-out infinite;}
+
+@media (prefers-reduced-motion: reduce) {
+  * {scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important;}
+  .jubilee-map-marker-alert {box-shadow: 0 0 0 0.1875rem rgba(225, 29, 72, .25), 0 2px 0.375rem rgba(225, 29, 72, .36); filter: brightness(1.05);}
+}
+
+/* icons scale with the root font-size; in @layer base so Tailwind size-* utilities still win */
+@layer base {
+  svg.lucide[width="10"] {width: 0.625rem; height: 0.625rem;}
+  svg.lucide[width="11"] {width: 0.6875rem; height: 0.6875rem;}
+  svg.lucide[width="12"] {width: 0.75rem; height: 0.75rem;}
+  svg.lucide[width="13"] {width: 0.8125rem; height: 0.8125rem;}
+  svg.lucide[width="14"] {width: 0.875rem; height: 0.875rem;}
+  svg.lucide[width="15"] {width: 0.9375rem; height: 0.9375rem;}
+  svg.lucide[width="16"] {width: 1rem; height: 1rem;}
+  svg.lucide[width="18"] {width: 1.125rem; height: 1.125rem;}
+  svg.lucide[width="20"] {width: 1.25rem; height: 1.25rem;}
+  svg.lucide[width="22"] {width: 1.375rem; height: 1.375rem;}
+  svg.lucide[width="24"] {width: 1.5rem; height: 1.5rem;}
+  svg.lucide[width="28"] {width: 1.75rem; height: 1.75rem;}
+  svg.lucide[width="32"] {width: 2rem; height: 2rem;}
+}

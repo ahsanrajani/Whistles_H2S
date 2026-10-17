@@ -1,0 +1,5 @@
+# gcloud builds submit --config deploy/gcp/cloudbuild-api.yaml --substitutions=_IMAGE=<region>-docker.pkg.dev/<project>/guru/api:v1 .
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "apps/api/Dockerfile", "-t", "${_IMAGE}", "."]
+images: ["${_IMAGE}"]
