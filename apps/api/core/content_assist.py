@@ -8,7 +8,7 @@ so the flow and its tests work offline.
 from db.repositories import brands as brands_repo
 from integrations.llm import panel
 
-MODEL_ID = "claude-haiku"
+MODEL_ID = "gemini"
 
 
 class ContentAssistError(Exception):
