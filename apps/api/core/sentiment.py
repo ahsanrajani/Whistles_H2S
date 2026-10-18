@@ -1,7 +1,7 @@
 """Sentiment scoring: star ratings and a lexicon first, a hosted model only for
 the ambiguous rest.
 
-Rules that override convenience (CODEX-HANDOFF, law 4):
+Rules that override convenience:
 
 - App-store reviews carry a 1–5 star rating: that *is* the sentiment
   (1–2 neg, 3 neu, 4–5 pos), recorded with ``model_id='rating'``. No model call.

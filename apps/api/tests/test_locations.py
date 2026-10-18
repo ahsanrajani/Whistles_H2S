@@ -1,35 +1,8 @@
-"""`location` table + repo + the Jubilee importer's row shape."""
-import os
-import sys
+"""`location` table + repo."""
 import unittest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "scripts")))
-
-import seed_jubilee_locations as seed  # noqa: E402
 from db.repositories import locations as repo  # noqa: E402
 from ._db import DbTestCase  # noqa: E402
-
-
-class SeedRowTests(unittest.TestCase):
-    def test_keys_unique_and_client_coordinates_all_land(self):
-        rows = seed.build_rows()
-        keys = [r["key"] for r in rows]
-        self.assertEqual(len(keys), len(set(keys)))
-        self.assertEqual(sum(1 for r in rows if r["lat"] is not None), len(seed.XLSX))
-
-    def test_website_rows_never_invent_coordinates(self):
-        for r in seed.build_rows():
-            if r["source"] == "website":
-                self.assertIsNone(r["lat"])
-                self.assertIsNone(r["lng"])
-
-    def test_twin_merges_keep_the_website_address(self):
-        row = next(r for r in seed.build_rows() if r["name"] == "Ayesha Manzil (Galaxy Branch)")
-        self.assertEqual(row["lat"], 24.9271287)
-        self.assertIn("Anar Kali", row["address"])
-
-    def test_no_atms(self):
-        self.assertFalse(any(r["kind"] == "atm" for r in seed.build_rows()))
 
 
 class LocationRepoTests(DbTestCase):

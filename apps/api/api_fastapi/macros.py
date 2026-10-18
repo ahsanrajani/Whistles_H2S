@@ -1,6 +1,6 @@
 """Macros API: library CRUD, apply-to-case, and auto-macro rules.
 
-Thin by design (project rules §0.3): each route resolves the tenant, calls one
+Thin by design: each route resolves the tenant, calls one
 ``core.macros`` / ``core.macro_rules`` function and returns its result. Authoring
 needs ``templates:create|edit|delete`` (admin / team lead / supervisor); every
 role that can open a case can list, preview and apply.

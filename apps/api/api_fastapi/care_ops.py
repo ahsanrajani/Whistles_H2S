@@ -1,6 +1,6 @@
 """Care supervisor + operational surfaces (build plan §5 / P3.5, P3.8), split
-out of care.py (which had grown past the 600-line hard limit — project rules
-§0.1). Presence/roster/queue health/performance, the held-reply approval
+out of care.py (which had grown past the 600-line file limit).
+Presence/roster/queue health/performance, the held-reply approval
 queue, scheduled-message and block/unblock actions, case export, and search
 — everything that isn't a single case's own read/reply/note/assign/transition
 lifecycle (that stays in care.py).

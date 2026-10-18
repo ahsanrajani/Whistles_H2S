@@ -1,4 +1,4 @@
-"""Recent owned posts (build plan Vantage-adjacent, requested by Hamza) --
+"""Recent owned posts (Vantage-adjacent) --
 Meta, LinkedIn, YouTube and X in one feed, real permalinks + real engagement
 counts where the platform exposes them. Reading (posts, comments) needs
 listening:view like the rest of the listening surfaces; replying from here

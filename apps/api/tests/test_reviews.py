@@ -185,7 +185,7 @@ class ReviewInsightTests(DbTestCase):
         self.assertEqual(combined["histogram"],
                          {"1": 14737, "2": 3968, "3": 11455, "4": 29207, "5": 318204})
         # >=4-star share of the merged histogram, with its Wilson band --
-        # statistical honesty rule (project rules 0.4) applies to this derived
+        # statistical honesty rule applies to this derived
         # figure too, not just to the per-item scorers.
         total = 14737 + 3968 + 11455 + 29207 + 318204
         good = 29207 + 318204

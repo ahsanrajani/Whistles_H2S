@@ -8,6 +8,7 @@ from core import branch_geo
 ROOT = Path(__file__).resolve().parents[1]
 
 
+@unittest.skipUnless(branch_geo._CSV.exists(), "data/branches.csv is not shipped in this repo")
 class CatalogTests(unittest.TestCase):
     def test_real_branches_load_with_coordinates(self):
         cat = branch_geo.catalog()

@@ -237,7 +237,7 @@ SOURCES = {
         "kind": "licensed", "independent": True, "needs": [], "unit": "review",
         "unit_cost": 0.0,
         "cost_note": "PoC placeholder — branch reviews paraphrased from real public "
-                     "complaints and loaded by scripts/seed_branch_demo.py. Replaced "
+                     "complaints and loaded as seed data. Replaced "
                      "by brightdata_gmaps_reviews once live.",
         "client_safe": True, "brand_implicit": True,
         "implicit_rule": "brightdata_owned_channel",

@@ -660,7 +660,7 @@ if __name__ == "__main__":
     start_worker()
     start_scheduler()
     # Default to localhost. Set GURU_HOST=0.0.0.0 to expose on the LAN or to sit
-    # behind a tunnel (scripts/share.ps1 / scripts/share.sh).
+    # behind a tunnel.
     host = os.environ.get("GURU_HOST", "127.0.0.1")
     port = int(os.environ.get("GURU_PORT", "5000"))
     probe_host = "127.0.0.1" if host in ("0.0.0.0", "", "::") else host

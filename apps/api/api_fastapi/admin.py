@@ -2,7 +2,7 @@
 gated by an ``admin`` permission; writes call the same helpers so behaviour
 cannot drift. Operational endpoints (source health/retention/precision/cost,
 backfills, routing policy, job console) split out to ``admin_ops.py`` to stay
-under project rules's 600-line hard limit — this file keeps workspace/brand/user/
+under the 600-line file limit — this file keeps workspace/brand/user/
 key/source/feature CRUD."""
 import json
 import os

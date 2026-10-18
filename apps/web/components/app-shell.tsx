@@ -169,7 +169,7 @@ export function AppShell({initialUser, tenant, project, children}: {initialUser:
     return <div key={label ?? "_top"}>{label && groupHeader(label)}<div className="gp-collapse" data-open={open}><div className="grid gap-0.5">{prefixed(items).map(renderLink)}</div></div></div>;
   };
   const sidebar = <>
-    <div className="flex h-24 shrink-0 items-center gap-3 px-6"><BrandMark size={32}/><div className="leading-tight"><div className="text-xl font-bold tracking-tight">Whistles</div><div className="font-onest text-xs text-white/55"></div></div></div>
+    <div className="flex h-24 shrink-0 items-center gap-3 px-6"><BrandMark size={32}/><div className="leading-tight"><div className="text-xl font-bold tracking-tight">Whistles</div></div></div>
     <nav ref={navRef} aria-label="Primary" className="relative grid min-h-0 flex-1 content-start gap-1 overflow-y-auto px-3 pb-3">
       <span ref={pillRef} aria-hidden="true" className="gp-nav-pill"/>
       {visibleGroups.map(g => group(g.label, g.items))}

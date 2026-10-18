@@ -130,8 +130,8 @@ on Overview, and the content calendar. Nothing else (no real bank) should be lis
 - Uploaded images in the content calendar are stored on the container's disk and are lost on redeploy
   (use a Cloud Storage bucket for anything permanent).
 - The live "realtime" banner uses a WebSocket that Next's proxy does not carry; pages still load and refresh.
-- The AI features call Gemini with `GOOGLE_API_KEY` if you set one, otherwise they use offline text. Moving them to
-  Vertex AI is the next change (see `docs/GCP-MIGRATION.md`).
+- The AI features call Gemini on Vertex AI as the Cloud Run service account when `GURU_LLM=vertex` is set (no API key;
+  grant the service account `roles/aiplatform.user` and enable `aiplatform.googleapis.com`). Without it they use offline text.
 
 ## Teardown (stops the billing)
 

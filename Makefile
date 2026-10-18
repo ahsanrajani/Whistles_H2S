@@ -1,4 +1,4 @@
-# Test-tier entrypoints (build plan §0.2). Thin delegates to the npm scripts so
+# Test-tier entrypoints. Thin delegates to the npm scripts so
 # there is one implementation. Run from the repo root.
 #
 #   make check-unit MODULE=tests.test_scam   # T0 — one module, < 10s

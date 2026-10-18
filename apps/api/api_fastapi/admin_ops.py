@@ -1,5 +1,5 @@
 """Admin operational surface — split out of admin.py (which had grown past
-the 600-line hard limit, project rules §0.1): source health/retention/precision/
+the 600-line file limit): source health/retention/precision/
 cost, owned-analytics, the one-off backfill buttons (care bridge, DM sync,
 web backfill, owned-posts media/comment-link), the job/scheduler console,
 and per-source retry/circuit-reset. No behavior change from the move."""

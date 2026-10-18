@@ -6,8 +6,7 @@ collector calls), and the console actions on one case — reply through the
 write layer, AI-assisted suggestion, note, assign, reassign, transition,
 survey issue/response. Roster/queue/performance, held-reply approval,
 scheduling, block/unblock, export and search live in ``care_ops.py`` (split
-out to stay under project rules's 600-line hard limit). The React UI itself is a
-frontend task.
+out to stay under the 600-line file limit).
 """
 from fastapi import APIRouter, Body, Depends, Request
 from sqlalchemy import text

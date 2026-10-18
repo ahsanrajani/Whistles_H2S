@@ -69,7 +69,7 @@ export function CustomerProfile({caseId}: {caseId: number}) {
     setEditing(true);
   }
 
-  // Computed/derived facts -- never editable (project rules: no fabricated
+  // Computed/derived facts -- never editable (no fabricated
   // client facts). Rendered the same read-only way whether or not the
   // editable fields above are currently in edit mode.
   const derived: [string, string | number | null][] = [
